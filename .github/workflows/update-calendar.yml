@@ -1,0 +1,49 @@
+name: Update calendar
+
+on:
+  schedule:
+    # How often the calendar is rebuilt. 17:00 UTC = 3-4am Sydney time, daily.
+    # Examples: every 12 hours = "0 5,17 * * *"; every 6 hours = "0 */6 * * *".
+    - cron: "0 17 * * *"
+  workflow_dispatch: # allows a manual run from the Actions tab
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # If this step fails, nothing is deployed and the last good calendar stays live.
+      - name: Build calendar
+        env:
+          OUTPUT: site/cricket.ics
+          # Hint to calendar apps on how often to re-check; keep in line with the cron above.
+          REFRESH_HOURS: "24"
+        run: python build_calendar.py
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
