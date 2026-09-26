@@ -10,6 +10,7 @@ on:
     branches: [main]
 
 permissions:
+  actions: write # for the keep-alive step below
   contents: read
   pages: write
   id-token: write
@@ -47,3 +48,11 @@ jobs:
 
       - id: deployment
         uses: actions/deploy-pages@v4
+
+      # GitHub disables scheduled workflows in repos with no commits for 60 days.
+      # Re-enabling the workflow via the API each run keeps the schedule alive.
+      - name: Keep schedule alive
+        if: github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/update-calendar.yml/enable"

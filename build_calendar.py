@@ -273,7 +273,10 @@ def write_ics(events, now):
             f"DTSTART:{ics_time(e['start'])}",
             f"DTEND:{ics_time(e['end'])}",
             f"SUMMARY:{ics_escape(e['summary'])}",
-            f"LOCATION:{ics_escape(e['location'])}",
+        ]
+        if e["location"]:
+            lines.append(f"LOCATION:{ics_escape(e['location'])}")
+        lines += [
             f"DESCRIPTION:{ics_escape(e['description'])}",
             "TRANSP:TRANSPARENT",
             "END:VEVENT",
